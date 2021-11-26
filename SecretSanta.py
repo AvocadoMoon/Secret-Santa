@@ -42,7 +42,7 @@ class SecretSanta():
         self.names = []
     
     #when similar values, n, is odd then the code returns even number of similar values still
-    def closestValues(list, i, n):
+    def closestValues(self, list, i, n):
         l = i - (n//2)
         r = i + (n//2)
 
@@ -90,88 +90,27 @@ class SecretSanta():
             graph[self.people[i]] = edges
         graph["source"] = self.people
 
-
-#when similar values, n, is odd then the code returns even number of similar values still
-def closestValues(list, i, n):
-    l = i - (n//2)
-    r = i + (n//2)
-
-    #if the list is not long enough on the left side, compensate with the right and vice versa
-    while l < 0:
-        r += 1
-        l += 1
-    while r > (len(list) - 1):
-        r -= 1
-        l -= 1
-    close = list[l: i]
-    close.extend(list[i+1: r+1])
-    return close
-
-def FordFulkerson(graph, start, end):
-    source = graph.get(start)
-    matches = []
-    
-    while len(source) != 0:
-        n = random.randint(0, len(source) - 1) #random node to travel to from source
-        names = graph.pop(source[n]) #remove from graph of gift givers
-
-        n2 = random.randint(0, len(names) - 1) #random name to match with that person
-        while names[n2] not in graph:
-            names.remove(source[n2])
-            n2 = random.randint(0, len(names))
-
-        match = (source[n], names[n2])
-
-        source.remove(source[n]) #remove from gift givers set
-        graph.pop(names[n2]) #remove from gift recievers set
-
-        matches.append(match)
-    
-    return matches
-
-
-
-def SecretSanta(fileLocal, negative, positive, importantQ):
-    #setup
-    weight = 10
-    f = open(fileLocal, "r")
-    line = f.readline() 
-    line = f.readline() #skip the first line of info
-    people = []
-    names = []
-
-    #file reading
-    while line:
-        line = line.rstrip()
-        answers = line.split(",")
-        person = Person(answers[1])
-
-        #check every answer and whether its negative, positive, or open ended
-        for i in range(len(answers)):
-            if answers[i] == negative[i]:
-                person.addMultipleChoice(answers[i], True)
-            elif answers[i] == positive[i]:
-                person.addMultipleChoice(answers[i], False)
-            else:
-                person.addOpenEnded(answers[i])
+    def FordFulkerson(self, graph, start, end):
+        source = graph.get(start)
+        matches = []
         
-        #every line is one person, and every persons sum must be calculated
-        person.summation(importantQ, weight)
-        people.append(person)
-    
-    
-    people.sort(key= lambda person: person.sum)
-    for i in people:
-        names.append(i.name)
+        while len(source) != 0:
+            n = random.randint(0, len(source) - 1) #random node to travel to from source
+            names = graph.pop(source[n]) #remove from graph of gift givers
 
-    #create graph
-    graph = dict()
-    for i in range(len(names)):
-        edges = closestValues(names, i, 4)
-        graph[names[i]] = "sink"
-        graph[people[i]] = edges
-    
-    graph["source"] = people
+            n2 = random.randint(0, len(names) - 1) #random name to match with that person
+            while names[n2] not in graph:
+                names.remove(source[n2])
+                n2 = random.randint(0, len(names))
+
+            match = (source[n], names[n2])
+
+            source.remove(source[n]) #remove from gift givers set
+            graph.pop(names[n2]) #remove from gift recievers set
+
+            matches.append(match)
+        
+        return matches
 
 
 if __name__ == "__main__":
@@ -184,21 +123,22 @@ if __name__ == "__main__":
     weight = 5
     l = [a for a in range(n)]
     person = Person("Kyle")
+    ss = SecretSanta(None, None, None, None)
 
     #0 edge case
-    t = closestValues(l, index, similarValues)
+    t = ss.closestValues(l, index, similarValues)
     t2 = [a for a in range(index + 1, index + 1 + similarValues)]
     assert(t == t2)
 
     #end of list edge case
     index = n-1
-    t = closestValues(l, index, similarValues)
+    t = ss.closestValues(l, index, similarValues)
     t2 = [a for a in range(index-similarValues, n-1)]
     assert(t == t2)
 
     #middle of list
     index = n//2
-    t = closestValues(l, index, similarValues)
+    t = ss.closestValues(l, index, similarValues)
     t2 = [a for a in range(index - (similarValues // 2), index + (similarValues // 2) + 1) if a != index]
     assert(t == t2)
 
