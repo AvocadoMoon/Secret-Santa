@@ -33,11 +33,12 @@ class Person():
         self.sum = sum
 
 class SecretSanta():
-    def __init__(self, fileLocal, negativeQ, positiveQ, importantQ):
+    def __init__(self, fileLocal, negativeQ, positiveQ, importantQ, weight):
         self.fileLocal = fileLocal
         self.negativeQ = negativeQ
         self.positiveQ = positiveQ
         self.importantQ = importantQ
+        self.weight = weight
         self.people = []
         self.names = []
     
@@ -58,6 +59,10 @@ class SecretSanta():
         return close
     
     def fileRead(self):
+        f = open(self.fileLocal, "r")
+        line = f.readline() 
+        line = f.readline() #skip the first line of info
+
         #file reading
         while line:
             line = line.rstrip()
@@ -74,21 +79,29 @@ class SecretSanta():
                     person.addOpenEnded(answers[i])
             
             #every line is one person, and every persons sum must be calculated
-            person.summation(self.importantQ, weight)
+            person.summation(self.importantQ, self.weight)
             self.people.append(person)
+            line = f.readline()
+        
+        f.close()
     
     def peopleSort(self):
         self.people.sort(key= lambda person: person.sum)
         for i in self.people:
             self.names.append(i.name)
     
-    def findMatches(self):
+    def findMatches(self, options):
+        self.fileRead()
+        self.peopleSort()
+
         graph = dict()
         for i in range(len(self.names)):
-            edges = self.closestValues(self.names, i, 4)
+            edges = self.closestValues(self.names, i, options)
             graph[self.names[i]] = "sink"
             graph[self.people[i]] = edges
         graph["source"] = self.people
+
+        return self.FordFulkerson(graph, "source", "sink")
 
     def FordFulkerson(self, graph, start, end):
         source = graph.get(start)
@@ -100,10 +113,12 @@ class SecretSanta():
 
             n2 = random.randint(0, len(names) - 1) #random name to match with that person
             while names[n2] not in graph:
-                names.remove(source[n2])
-                n2 = random.randint(0, len(names))
+                names.remove(names[n2])
+                if (len(names) == 0):
+                    None
+                n2 = random.randint(0, len(names) - 1)
 
-            match = (source[n], names[n2])
+            match = (source[n].name, names[n2])
 
             source.remove(source[n]) #remove from gift givers set
             graph.pop(names[n2]) #remove from gift recievers set
@@ -111,53 +126,3 @@ class SecretSanta():
             matches.append(match)
         
         return matches
-
-
-if __name__ == "__main__":
-
-    #setup
-    similarValues = 4
-    index = 0
-    n = 10
-    answer = "yo"
-    weight = 5
-    l = [a for a in range(n)]
-    person = Person("Kyle")
-    ss = SecretSanta(None, None, None, None)
-
-    #0 edge case
-    t = ss.closestValues(l, index, similarValues)
-    t2 = [a for a in range(index + 1, index + 1 + similarValues)]
-    assert(t == t2)
-
-    #end of list edge case
-    index = n-1
-    t = ss.closestValues(l, index, similarValues)
-    t2 = [a for a in range(index-similarValues, n-1)]
-    assert(t == t2)
-
-    #middle of list
-    index = n//2
-    t = ss.closestValues(l, index, similarValues)
-    t2 = [a for a in range(index - (similarValues // 2), index + (similarValues // 2) + 1) if a != index]
-    assert(t == t2)
-
-    #0 sum
-    person.addMultipleChoice(answer, True) #dosent matter the answer since the boolean is the only thing that affects values
-    person.addMultipleChoice(answer, False)
-    person.summation([], weight)
-    assert(person.sum == 0)
-
-    #positive sum weighted
-    person.multipleChoice = []
-    person.negMultipleChoice = []
-    person.addMultipleChoice(answer, False)
-    person.summation([answer], weight)
-    assert(person.sum == weight)
-
-    #negative sum weighted
-    person.multipleChoice = []
-    person.negMultipleChoice = []
-    person.addMultipleChoice(answer, True)
-    person.summation([answer], weight)
-    assert(person.sum == (0 - weight))
