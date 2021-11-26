@@ -9,4 +9,6 @@ Once everyones score has been computed, get the four closest people to someone a
 
 Finally make every edge equal to 1 and compute max flow on the graph.
 
-Should have run time of O(
+If wanting to use multiple choice questions with 4 answers, use a 2D graph with points and have each answer assigned to a different region of graph. If more just add more planes to the graph.
+
+With 2 choices for answers though it allows for uncatogrization for the answers
