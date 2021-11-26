@@ -1,0 +1,12 @@
+Have a set of answers be related to positive number scale, and the other set of questions be related to negative number scale. An
+example would be for the question "Meaningful or Suprise" for gift, meaningful would be positive 1 and Suprise would be negative
+1. For questions that hold more importance, their number values would be higher while unimportant questions would have a lower
+number value.
+
+After each question is assigned a value, the numbers are summed together for a final score. Individuals with similar scores mean that the majority of their answers must be aligned with anothers.
+
+Once everyones score has been computed, get the four closest people to someone and connect them to that person.
+
+Finally make every edge equal to 1 and compute max flow on the graph.
+
+Should have run time of O(
