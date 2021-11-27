@@ -33,7 +33,7 @@ class TestSecretSanta(unittest.TestCase):
         negQ = ["time", "Name", '"Expensive"', '"I know what I want"', '"Cats"', '"No"', None, '"No"', '"No"', None, None, None]
         impQ = ['"Expensive"', '"Meaningful"', '"Surprise me"', '"I know what I want"']
         weight = 5
-        fl = r"C:\Users\Zeke\Document\Programming\Jokes\Secret-Santa\Secret Santa Odd.csv"
+        fl = r"C:\Users\Zeke\Document\Programming\Jokes\Secret-Santa\Secret Santa Even.csv"
         ss = SecretSanta.SecretSanta(fl, negQ, posQ, impQ, weight)
         l = ss.findMatches(5)
         print(l)

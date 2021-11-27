@@ -32,6 +32,22 @@ class Person():
                 sum -= 1
         self.sum = sum
 
+#matrix graph is best since edges may be very dense and, more vertices won't be added
+class Graph():
+    def __init__(self, vertices):
+        self.vertices = vertices
+        self.graph = [0 * len(self.vertices)] * len(self.vertices)
+
+    def add_edge(self, row, column):
+        self.graph[row][column] += 1
+    
+    def remove_edge(self, row, column):
+        self.graph[row][column] -= 1
+    
+    def get_number_of_edges(self, row, column):
+        return self.graph[row][column]
+
+
 class SecretSanta():
     def __init__(self, fileLocal, negativeQ, positiveQ, importantQ, weight):
         self.fileLocal = fileLocal
@@ -39,11 +55,13 @@ class SecretSanta():
         self.positiveQ = positiveQ
         self.importantQ = importantQ
         self.weight = weight
+        self.graph = None
         self.people = []
         self.names = []
+        self.options = None
     
     #when similar values, n, is odd then the code returns even number of similar values still
-    def closestValues(self, list, i, n):
+    def closestValues(self, list, i, n, matrixGraph=True):
         l = i - (n//2)
         r = i + (n//2)
 
@@ -56,7 +74,8 @@ class SecretSanta():
             l -= 1
         close = list[l: i]
         close.extend(list[i+1: r+1])
-        return close
+        if matrixGraph:
+            return
     
     def fileRead(self):
         f = open(self.fileLocal, "r")
@@ -87,21 +106,50 @@ class SecretSanta():
     
     def peopleSort(self):
         self.people.sort(key= lambda person: person.sum)
-        for i in self.people:
-            self.names.append(i.name)
     
+    def add_potential_matches(self, l, r, i):
+        q = []
+        n = l
+        while i != l:
+            if self.graph.get_number_of_edges(l, i) < self.options:
+                self.graph.add_edge(l, i)
+                l += 1
+            elif l > 0:
+                n -= 1
+                q.append(n)
+                l += 1
+            else:
+                r += 1
+                l += 1
+        for t in q:
+            self.graph.add_edge(t, i)
+        
+        n = r
+        q = []
+        while i!= r:
+            if self.graph.get_number_of_edges(r, i) < self.options:
+                self.graph.add_edge(r, i)
+                r -= 1
+            elif r < len(self.people) -1:
+                n += 1
+                q.append(r)
+                r -=1
+        for t in q:
+            self.graph.add_edge(t, i)
+    
+    #no one node can have more than #options edges or else theres a possibility that one person or more get left out
+    #rows and vertix are the sorted array of people
     def findMatches(self, options):
         self.fileRead()
         self.peopleSort()
 
-        graph = dict()
+        self.graph = Graph(len(self.people))
+        self.options = options
         for i in range(len(self.names)):
-            edges = self.closestValues(self.names, i, options)
-            graph[self.names[i]] = "sink"
-            graph[self.people[i]] = edges
-        graph["source"] = self.people
+            l, r = self.closestValues(self.names, i)
+            self.add_potential_matches(l, r, i)
 
-        return self.FordFulkerson(graph, "source", "sink")
+        return self.FordFulkerson(None, 0, len(self.people) - 1)
 
     def FordFulkerson(self, graph, start, end):
         source = graph.get(start)
