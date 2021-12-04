@@ -9,7 +9,8 @@ class TestSecretSanta(unittest.TestCase):
         impQ = ['"Expensive"', '"Meaningful"', '"Surprise me"', '"I know what I want"']
         weight = 5
         fl = r"C:\Users\Zeke\Document\Programming\Jokes\Secret-Santa\Secret Santa Even.csv"
-        self.ss = SecretSanta.SecretSanta(fl, negQ, posQ, impQ, weight)
+        laptop = r"E:\Downloads\Programing\Jokes\Secret-Santa\Secret Santa Even.csv"
+        self.ss = SecretSanta.SecretSanta(laptop, negQ, posQ, impQ, weight)
     
     def test_close_values(self):
         #setup
