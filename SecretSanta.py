@@ -1,4 +1,4 @@
-from os import name
+from os import error, name
 import random
 
 class Person():
@@ -35,17 +35,37 @@ class Person():
 #matrix graph is best since edges may be very dense and, more vertices won't be added
 class Graph():
     def __init__(self, vertices):
+        self.adjMatrix = []
         self.vertices = vertices
-        self.graph = [0 * len(self.vertices)] * len(self.vertices)
+        self.size = len(self.vertices)
+        for i in range(self.size):
+            self.adjMatrix.append([0 for i in range(self.size)])
 
-    def add_edge(self, row, column):
-        self.graph[row][column] += 1
+    # Add edges
+    def add_edge(self, v1, v2):
+        if v1 == v2:
+            print("Same vertex %d and %d" % (v1, v2))
+        self.adjMatrix[v1][v2] = 1
+
+    # Remove edges
+    def remove_edge(self, v1, v2):
+        if self.adjMatrix[v1][v2] == 0:
+            print("No edge between %d and %d" % (v1, v2))
+            return
+        self.adjMatrix[v1][v2] = 0
+
+    def __len__(self):
+        return self.size
     
-    def remove_edge(self, row, column):
-        self.graph[row][column] -= 1
-    
-    def get_number_of_edges(self, row, column):
-        return self.graph[row][column]
+    def getRow(self, row):
+        return self.adjMatrix[row]
+
+    # Print the matrix
+    def print_matrix(self):
+        for row in self.adjMatrix:
+            for val in row:
+                print('{:4}'.format(val)),
+            print
 
 
 class SecretSanta():
@@ -61,7 +81,7 @@ class SecretSanta():
         self.options = None
     
     #when similar values, n, is odd then the code returns even number of similar values still
-    def closestValues(self, list, i, n, matrixGraph=True):
+    def closestValues(self, list, i, n):
         l = i - (n//2)
         r = i + (n//2)
 
@@ -69,13 +89,14 @@ class SecretSanta():
         while l < 0:
             r += 1
             l += 1
+        if l == i:
+            l += 1
         while r > (len(list) - 1):
             r -= 1
             l -= 1
-        close = list[l: i]
-        close.extend(list[i+1: r+1])
-        if matrixGraph:
-            return
+        if r == i:
+            r -= 1
+        return l, r
     
     def fileRead(self):
         f = open(self.fileLocal, "r")
@@ -107,15 +128,19 @@ class SecretSanta():
     def peopleSort(self):
         self.people.sort(key= lambda person: person.sum)
     
+    #checks if someone already has been placed in potential matching with n amount of people, if so skip to other person
     def add_potential_matches(self, l, r, i):
         q = []
         n = l
-        while i != l:
-            if self.graph.get_number_of_edges(l, i) < self.options:
+        while i != l and l <= r:
+            s = sum(self.graph.getRow(l))
+            if s < self.options:
                 self.graph.add_edge(l, i)
                 l += 1
             elif l > 0:
                 n -= 1
+                while sum(self.graph.getRow(n)) == self.options:
+                    n -= 1
                 q.append(n)
                 l += 1
             else:
@@ -126,12 +151,14 @@ class SecretSanta():
         
         n = r
         q = []
-        while i!= r:
-            if self.graph.get_number_of_edges(r, i) < self.options:
+        while i!= r and r >= l:
+            if sum(self.graph.getRow(r)) < self.options:
                 self.graph.add_edge(r, i)
                 r -= 1
             elif r < len(self.people) -1:
                 n += 1
+                while sum(self.graph.getRow(n)) == self.options:
+                    n += 1
                 q.append(r)
                 r -=1
         for t in q:
@@ -139,38 +166,54 @@ class SecretSanta():
     
     #no one node can have more than #options edges or else theres a possibility that one person or more get left out
     #rows and vertix are the sorted array of people
+    #row is gift givers columns is gift recievers
     def findMatches(self, options):
         self.fileRead()
         self.peopleSort()
 
-        self.graph = Graph(len(self.people))
+        self.graph = Graph(self.people)
         self.options = options
-        for i in range(len(self.names)):
-            l, r = self.closestValues(self.names, i)
-            self.add_potential_matches(l, r, i)
+        i = random.randint(0, len(self.people) - 1) #the first person chosen has a high likely hood that all potential matches are similar to them, meanwhile the last person has very poor probability, so make the first person random for fairness
+        t = i
+        done = 0
+        while not(done):
+            l, r = self.closestValues(self.people, t, options)
+            self.add_potential_matches(l, r, t)
+            t = (t + 1) % len(self.people)
+            if t == i:
+                done = 1
 
-        return self.FordFulkerson(None, 0, len(self.people) - 1)
+        while True:
+            try:
+                return self.matches()
+            except(ValueError):
+                continue
 
-    def FordFulkerson(self, graph, start, end):
-        source = graph.get(start)
+    def matches(self):
+        rows = [a for a in range(len(self.people))]
+        cols = [a for a in range(len(self.people))]
         matches = []
-        
-        while len(source) != 0:
-            n = random.randint(0, len(source) - 1) #random node to travel to from source
-            names = graph.pop(source[n]) #remove from graph of gift givers
 
-            n2 = random.randint(0, len(names) - 1) #random name to match with that person
-            while names[n2] not in graph:
-                names.remove(names[n2])
-                if (len(names) == 0):
-                    None
-                n2 = random.randint(0, len(names) - 1)
+        while len(rows) != 0:
+            v = random.choice(rows)
+            r = self.graph.getRow(v)
+            v2 = r.index(1)
+            while v2 not in cols:
+                self.graph.remove_edge(v, v2)
+                v2 = r.index(1)
+            self.graph.remove_edge(v, v2)
+            rows.remove(v)
+            cols.remove(v2)
 
-            match = (source[n].name, names[n2])
+            v = self.people[v]
+            v2 = self.people[v2]
 
-            source.remove(source[n]) #remove from gift givers set
-            graph.pop(names[n2]) #remove from gift recievers set
-
-            matches.append(match)
+            matches.append((v, v2))
         
         return matches
+
+
+"""
+Can use a pseudo random function of the sorted list of degree of matches, then with the function allow an input of randomenss, 1 being max randomness and decimal points till 0 means least randomness
+This function will map either people who match very well close together in a set space or randomly either far apart or close together
+"""

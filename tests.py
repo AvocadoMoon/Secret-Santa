@@ -2,41 +2,56 @@ import unittest
 import SecretSanta
 
 class TestSecretSanta(unittest.TestCase):
+
+    def setUp(self):
+        posQ = ["time", "Name", '"Meaningful"', '"Surprise me"', '"Dogs"', '"Yes"', None, '"Yes"', '"Yes"', None, None, None]
+        negQ = ["time", "Name", '"Expensive"', '"I know what I want"', '"Cats"', '"No"', None, '"No"', '"No"', None, None, None]
+        impQ = ['"Expensive"', '"Meaningful"', '"Surprise me"', '"I know what I want"']
+        weight = 5
+        fl = r"C:\Users\Zeke\Document\Programming\Jokes\Secret-Santa\Secret Santa Even.csv"
+        self.ss = SecretSanta.SecretSanta(fl, negQ, posQ, impQ, weight)
     
     def test_close_values(self):
         #setup
         similarValues = 4
         index = 0
         n = 10
-        l = [a for a in range(n)]
-        ss = SecretSanta.SecretSanta(None, None, None, None, None)
+        lis = [a for a in range(n)]
+        ss = self.ss
 
         #0 edge case
-        t = ss.closestValues(l, index, similarValues)
-        t2 = [a for a in range(index + 1, index + 1 + similarValues)]
-        assert(t == t2)
+        l, r = ss.closestValues(lis, index, similarValues)
+        lt = index + 1
+        rt = index + similarValues
+        assert(l == lt)
+        assert(r == rt)
 
         #end of list edge case
         index = n-1
-        t = ss.closestValues(l, index, similarValues)
-        t2 = [a for a in range(index-similarValues, n-1)]
-        assert(t == t2)
+        l , r = ss.closestValues(lis, index, similarValues)
+        lt = index-similarValues
+        rt = index - 1
+        assert(lt == l)
+        assert(rt == r)
 
         #middle of list
         index = n//2
-        t = ss.closestValues(l, index, similarValues)
-        t2 = [a for a in range(index - (similarValues // 2), index + (similarValues // 2) + 1) if a != index]
-        assert(t == t2)
+        l, r = ss.closestValues(lis, index, similarValues)
+        lt = index - (similarValues // 2)
+        rt = index + (similarValues // 2)
+        assert(lt == l)
+        assert(rt == r)
     
     def test_find_matches(self):
-        posQ = ["time", "Name", '"Meaningful"', '"Surprise me"', '"Dogs"', '"Yes"', None, '"Yes"', '"Yes"', None, None, None]
-        negQ = ["time", "Name", '"Expensive"', '"I know what I want"', '"Cats"', '"No"', None, '"No"', '"No"', None, None, None]
-        impQ = ['"Expensive"', '"Meaningful"', '"Surprise me"', '"I know what I want"']
-        weight = 5
-        fl = r"C:\Users\Zeke\Document\Programming\Jokes\Secret-Santa\Secret Santa Even.csv"
-        ss = SecretSanta.SecretSanta(fl, negQ, posQ, impQ, weight)
+        ss = self.ss
         l = ss.findMatches(5)
-        print(l)
+        for i in l:
+            print(i[0].name, i[1].name)
+    
+    def test_file_read(self):
+        ss = self.ss
+        
+
 
 
 
