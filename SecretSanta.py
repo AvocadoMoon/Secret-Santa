@@ -171,21 +171,23 @@ class SecretSanta():
         self.fileRead()
         self.peopleSort()
 
-        self.graph = Graph(self.people)
-        self.options = options
-        i = random.randint(0, len(self.people) - 1) #the first person chosen has a high likely hood that all potential matches are similar to them, meanwhile the last person has very poor probability, so make the first person random for fairness
-        t = i
-        done = 0
-        while not(done):
-            l, r = self.closestValues(self.people, t, options)
-            self.add_potential_matches(l, r, t)
-            t = (t + 1) % len(self.people)
-            if t == i:
-                done = 1
-
+        def helper(self):
+            self.graph = Graph(self.people)
+            self.options = options
+            i = random.randint(0, len(self.people) - 1) #the first person chosen has a high likely hood that all potential matches are similar to them, meanwhile the last person has very poor probability, so make the first person random for fairness
+            t = i
+            done = 0
+            while not(done):
+                l, r = self.closestValues(self.people, t, options)
+                self.add_potential_matches(l, r, t)
+                t = (t + 1) % len(self.people)
+                if t == i:
+                    done = 1
+            return self.matches()
+        
         while True:
             try:
-                return self.matches()
+                return helper(self)
             except(ValueError):
                 continue
 
