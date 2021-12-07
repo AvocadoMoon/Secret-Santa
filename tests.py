@@ -48,8 +48,8 @@ class TestSecretSanta(unittest.TestCase):
         l = ss.findMatches(2)
         for i in l:
             print(i[0].name, i[1].name)
-        
-        ss.sendEmails(465, "developerTest674@gmail.com", "password674")
+        attachment = r"E:\Downloads\Programing\Jokes\Secret-Santa\test.gif"
+        ss.sendEmails(587, "developerTest674@gmail.com", "password674", attachment)
     
     def test_file_read(self):
         ss = self.ss

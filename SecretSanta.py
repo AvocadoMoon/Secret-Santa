@@ -1,6 +1,10 @@
+from email.mime.base import MIMEBase
 from os import error, name
 import random
 import smtplib, ssl
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email import encoders
 
 port = 465 #for ssl
 
@@ -115,7 +119,7 @@ class SecretSanta():
     
     def fileRead(self):
         f = open(self.fileLocal, "r")
-        line = f.readline() 
+        line = f.readline().rstrip()
         self.allQuestions = line.split(",")[3:] #get all the questions
         line = f.readline() #skip the first line of info, its just questions
 
@@ -237,30 +241,44 @@ class SecretSanta():
         
         return matches
     
-    def sendEmails(self, port, sender_email, password):
+    def sendEmails(self, port, sender_email, password, attachment):
         smtpServer = "smtp.gmail.com"
         server = smtplib.SMTP(smtpServer, port)
+        context = ssl.create_default_context()
         try:
             server.ehlo() # Can be omitted
-            server.starttls() # Secure the connection
+            server.starttls(context=context) # Secure the connection
             server.ehlo() # Can be omitted
             server.login(sender_email, password)
             for i in self.matched:
                 giftGiver= i[0]
                 giftReciever = i[1]
                 reciever_email = giftGiver.email
-                message = "Hello %s \n \t You have matched with %s and this is how they answered the following questions: \n"
+                message = MIMEMultipart("Email")
+                message['Subject'] = "Secret Santa"
+                message['From'] = sender_email
+                message["To"] = reciever_email
+                body = "Hello %s \n, You have matched with %s and this is how they answered the following questions: \n"%(giftGiver.name, giftReciever.name)
                 q = 0
                 for k in giftReciever.answers:
-                    message = message + self.allQuestions[q] + ": " + k + "\n"
+                    body = body + self.allQuestions[q] + ": " + k + "\n"
                     q += 1
                 print(message)
-                server.send_message(message, sender_email, reciever_email)
+                message.attach(MIMEText(body, "plain"))
+                with open(attachment, "rb") as a:
+                    part = MIMEBase("application", "octet-stream")
+                    part.set_payload(a.read())
+                encoders.encode_base64(part)
+                part.add_header("Content-Disposition",
+                    f"attachment; filename= Santa.gif",
+                )
+                message.attach(part)
+                server.sendmail(sender_email, reciever_email, message.as_string())
+            server.quit()
         except Exception as e:
             # Print any error messages to stdout
-            print(e)
-        finally:
-            server.quit() 
+            server.quit()
+            raise e
 
 
 """
