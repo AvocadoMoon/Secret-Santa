@@ -258,13 +258,25 @@ class SecretSanta():
                 message['Subject'] = "Secret Santa"
                 message['From'] = sender_email
                 message["To"] = reciever_email
-                body = "Hello %s \n, You have matched with %s and this is how they answered the following questions: \n"%(giftGiver.name, giftReciever.name)
+                # body = f"Hello {giftGiver.name}, \nYou have matched with {giftReciever.name} and this is how they answered the following questions: \n"
+                # q = 0
+                # for k in giftReciever.answers:
+                #     body = body + self.allQuestions[q] + ': '  + k + "\n"
+                #     q += 1
+                html = f"""\
+<html>
+  <body>
+    <p> Hello {giftGiver.name}, \nYou have matched with {giftReciever.name} and this is how they answered the following questions: <br>"""
                 q = 0
                 for k in giftReciever.answers:
-                    body = body + self.allQuestions[q] + ": " + k + "\n"
+                    html = html + '<b>' + self.allQuestions[q] + '</b>' + ': ' + k + '<br>' + '\n'
                     q += 1
-                print(message)
-                message.attach(MIMEText(body, "plain"))
+                html += """</p>
+  </body>
+</html>"""
+                print(html)
+                #message.attach(MIMEText(body, "plain"))
+                message.attach(MIMEText(html, "html"))
                 with open(attachment, "rb") as a:
                     part = MIMEBase("application", "octet-stream")
                     part.set_payload(a.read())
