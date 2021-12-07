@@ -13,17 +13,21 @@ class Person():
         self.sum = 0
         self.email = ""
         self.qOrder = []
+        self.answers = []
     
     def addMultipleChoice(self, answer, neg):
         if neg:
             self.negMultipleChoice.append(answer)
+            self.answers.append(answer)
             self.qOrder.append("-m")
         else:
             self.multipleChoice.append(answer)
+            self.answers.append(answer)
             self.qOrder.append("m")
     
     def addOpenEnded(self, answer):
         self.openEnded.append(answer)
+        self.answers.append(answer)
         self.qOrder.append("o")
     
     def summation(self, importantQ, weight):
@@ -88,7 +92,6 @@ class SecretSanta():
         self.weight = weight
         self.graph = None
         self.people = []
-        self.names = []
         self.options = None
         self.matched = None
     
@@ -113,7 +116,7 @@ class SecretSanta():
     def fileRead(self):
         f = open(self.fileLocal, "r")
         line = f.readline() 
-        questions = line.split(",")
+        self.allQuestions = line.split(",")[3:] #get all the questions
         line = f.readline() #skip the first line of info, its just questions
 
         #file reading
@@ -125,7 +128,7 @@ class SecretSanta():
             person.setEmail(answers[1])
 
             #check every answer and whether its negative, positive, or open ended
-            for i in range(2 ,len(answers)):
+            for i in range(3 ,len(answers)):
                 if answers[i] == self.negativeQ[i]:
                     person.addMultipleChoice(answers[i], True)
                 elif answers[i] == self.positiveQ[i]:
@@ -236,11 +239,10 @@ class SecretSanta():
     
     def sendEmails(self, port, sender_email, password):
         smtpServer = "smtp.gmail.com"
-        context = ssl.create_default_context()
+        server = smtplib.SMTP(smtpServer, port)
         try:
-            server = smtplib.SMTP(smtpServer,port)
             server.ehlo() # Can be omitted
-            server.starttls(context=context) # Secure the connection
+            server.starttls() # Secure the connection
             server.ehlo() # Can be omitted
             server.login(sender_email, password)
             for i in self.matched:
@@ -248,8 +250,12 @@ class SecretSanta():
                 giftReciever = i[1]
                 reciever_email = giftGiver.email
                 message = "Hello %s \n \t You have matched with %s and this is how they answered the following questions: \n"
-                for k in giftReciever.qOrder:
-                    continue
+                q = 0
+                for k in giftReciever.answers:
+                    message = message + self.allQuestions[q] + ": " + k + "\n"
+                    q += 1
+                print(message)
+                server.send_message(message, sender_email, reciever_email)
         except Exception as e:
             # Print any error messages to stdout
             print(e)

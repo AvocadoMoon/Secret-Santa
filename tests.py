@@ -4,12 +4,12 @@ import SecretSanta
 class TestSecretSanta(unittest.TestCase):
 
     def setUp(self):
-        posQ = ["time", "Name", '"Meaningful"', '"Surprise me"', '"Dogs"', '"Yes"', None, '"Yes"', '"Yes"', None, None, None]
-        negQ = ["time", "Name", '"Expensive"', '"I know what I want"', '"Cats"', '"No"', None, '"No"', '"No"', None, None, None]
+        posQ = ["time", "Mail", "Name", '"Meaningful"', '"Surprise me"', '"Dogs"', '"Yes"', None, '"Yes"', '"Yes"', None, None, None]
+        negQ = ["time", "Mail", "Name", '"Expensive"', '"I know what I want"', '"Cats"', '"No"', None, '"No"', '"No"', None, None, None]
         impQ = ['"Expensive"', '"Meaningful"', '"Surprise me"', '"I know what I want"']
         weight = 5
         fl = r"C:\Users\Zeke\Document\Programming\Jokes\Secret-Santa\Secret Santa Even.csv"
-        laptop = r"E:\Downloads\Programing\Jokes\Secret-Santa\Secret Santa Even.csv"
+        laptop = r"E:\Downloads\Programing\Jokes\Secret-Santa\Secret Santa Email.csv"
         self.ss = SecretSanta.SecretSanta(laptop, negQ, posQ, impQ, weight)
     
     def test_close_values(self):
@@ -45,9 +45,11 @@ class TestSecretSanta(unittest.TestCase):
     
     def test_find_matches(self):
         ss = self.ss
-        l = ss.findMatches(5)
+        l = ss.findMatches(2)
         for i in l:
             print(i[0].name, i[1].name)
+        
+        ss.sendEmails(465, "developerTest674@gmail.com", "password674")
     
     def test_file_read(self):
         ss = self.ss
