@@ -1,5 +1,8 @@
 from os import error, name
 import random
+import smtplib, ssl
+
+port = 465 #for ssl
 
 class Person():
     def __init__(self, name) ->None:
@@ -8,15 +11,20 @@ class Person():
         self.openEnded = []
         self.name = name
         self.sum = 0
+        self.email = ""
+        self.qOrder = []
     
     def addMultipleChoice(self, answer, neg):
         if neg:
             self.negMultipleChoice.append(answer)
+            self.qOrder.append("-m")
         else:
             self.multipleChoice.append(answer)
+            self.qOrder.append("m")
     
     def addOpenEnded(self, answer):
         self.openEnded.append(answer)
+        self.qOrder.append("o")
     
     def summation(self, importantQ, weight):
         sum = 0
@@ -31,6 +39,9 @@ class Person():
             else:
                 sum -= 1
         self.sum = sum
+    
+    def setEmail(self, email):
+        self.email = email
 
 #matrix graph is best since edges may be very dense and, more vertices won't be added
 class Graph():
@@ -44,14 +55,13 @@ class Graph():
     # Add edges
     def add_edge(self, v1, v2):
         if v1 == v2:
-            print("Same vertex %d and %d" % (v1, v2))
+            raise ValueError #cant be matched with yourself
         self.adjMatrix[v1][v2] = 1
 
     # Remove edges
     def remove_edge(self, v1, v2):
         if self.adjMatrix[v1][v2] == 0:
-            print("No edge between %d and %d" % (v1, v2))
-            return
+            raise ValueError
         self.adjMatrix[v1][v2] = 0
 
     def __len__(self):
@@ -74,11 +84,13 @@ class SecretSanta():
         self.negativeQ = negativeQ
         self.positiveQ = positiveQ
         self.importantQ = importantQ
+        self.allQuestions = []
         self.weight = weight
         self.graph = None
         self.people = []
         self.names = []
         self.options = None
+        self.matched = None
     
     #when similar values, n, is odd then the code returns even number of similar values still
     def closestValues(self, list, i, n):
@@ -101,16 +113,19 @@ class SecretSanta():
     def fileRead(self):
         f = open(self.fileLocal, "r")
         line = f.readline() 
-        line = f.readline() #skip the first line of info
+        questions = line.split(",")
+        line = f.readline() #skip the first line of info, its just questions
 
         #file reading
         while line:
+            #format for all is #time stamp, email, name
             line = line.rstrip()
             answers = line.split(",")
-            person = Person(answers[1])
+            person = Person(answers[2]) #gets name
+            person.setEmail(answers[1])
 
             #check every answer and whether its negative, positive, or open ended
-            for i in range(len(answers)):
+            for i in range(2 ,len(answers)):
                 if answers[i] == self.negativeQ[i]:
                     person.addMultipleChoice(answers[i], True)
                 elif answers[i] == self.positiveQ[i]:
@@ -212,7 +227,34 @@ class SecretSanta():
 
             matches.append((v, v2))
         
+        if (len(matches) < len(self.people)):
+            raise ValueError
+
+        self.matched = matches
+        
         return matches
+    
+    def sendEmails(self, port, sender_email, password):
+        smtpServer = "smtp.gmail.com"
+        context = ssl.create_default_context()
+        try:
+            server = smtplib.SMTP(smtpServer,port)
+            server.ehlo() # Can be omitted
+            server.starttls(context=context) # Secure the connection
+            server.ehlo() # Can be omitted
+            server.login(sender_email, password)
+            for i in self.matched:
+                giftGiver= i[0]
+                giftReciever = i[1]
+                reciever_email = giftGiver.email
+                message = "Hello %s \n \t You have matched with %s and this is how they answered the following questions: \n"
+                for k in giftReciever.qOrder:
+                    continue
+        except Exception as e:
+            # Print any error messages to stdout
+            print(e)
+        finally:
+            server.quit() 
 
 
 """
