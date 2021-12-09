@@ -6,8 +6,6 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email import encoders
 
-port = 465 #for ssl
-
 class Person():
     def __init__(self, name) ->None:
         self.negMultipleChoice = []
@@ -19,6 +17,7 @@ class Person():
         self.qOrder = []
         self.answers = []
     
+    #O(1), just adds one question
     def addMultipleChoice(self, answer, neg):
         if neg:
             self.negMultipleChoice.append(answer)
@@ -29,11 +28,13 @@ class Person():
             self.answers.append(answer)
             self.qOrder.append("m")
     
+    #O(1)
     def addOpenEnded(self, answer):
         self.openEnded.append(answer)
         self.answers.append(answer)
         self.qOrder.append("o")
     
+    #O(q), goes through every question
     def summation(self, importantQ, weight):
         sum = 0
         for i in self.multipleChoice:
@@ -100,6 +101,8 @@ class SecretSanta():
         self.matched = None
     
     #when similar values, n, is odd then the code returns even number of similar values still
+
+    #O(n), worst case is it has to do all right or all left
     def closestValues(self, list, i, n):
         l = i - (n//2)
         r = i + (n//2)
@@ -117,6 +120,7 @@ class SecretSanta():
             r -= 1
         return l, r
     
+    #O(lq), reads every line within the file, and then iterates through every question
     def fileRead(self):
         f = open(self.fileLocal, "r")
         line = f.readline().rstrip()
@@ -132,6 +136,7 @@ class SecretSanta():
             person.setEmail(answers[1])
 
             #check every answer and whether its negative, positive, or open ended
+            #O(q)
             for i in range(3 ,len(answers)):
                 if answers[i] == self.negativeQ[i]:
                     person.addMultipleChoice(answers[i], True)
@@ -147,10 +152,12 @@ class SecretSanta():
         
         f.close()
     
+    #O(plogp), sorts all the people in a list
     def peopleSort(self):
         self.people.sort(key= lambda person: person.sum)
     
     #checks if someone already has been placed in potential matching with n amount of people, if so skip to other person
+    #O(n), worst case every potential match can not be used, and therefore has to iterate thorugh whole list to find the last few people available
     def add_potential_matches(self, l, r, i):
         q = []
         n = l
@@ -189,9 +196,10 @@ class SecretSanta():
     #no one node can have more than #options edges or else theres a possibility that one person or more get left out
     #rows and vertix are the sorted array of people
     #row is gift givers columns is gift recievers
+    # O(lq * plogp * p^2) => O(lqp^2)
     def findMatches(self, options):
-        self.fileRead()
-        self.peopleSort()
+        self.fileRead() #O(lq)
+        self.peopleSort() #O(plogp)
 
         def helper(self):
             self.graph = Graph(self.people)
@@ -199,13 +207,13 @@ class SecretSanta():
             i = random.randint(0, len(self.people) - 1) #the first person chosen has a high likely hood that all potential matches are similar to them, meanwhile the last person has very poor probability, so make the first person random for fairness
             t = i
             done = 0
-            while not(done):
-                l, r = self.closestValues(self.people, t, options)
-                self.add_potential_matches(l, r, t)
+            while not(done): #O(p)
+                l, r = self.closestValues(self.people, t, options) #O(p)
+                self.add_potential_matches(l, r, t) #O(p)
                 t = (t + 1) % len(self.people)
                 if t == i:
                     done = 1
-            return self.matches()
+            return self.matches() #O(p)
         
         while True:
             try:
@@ -218,11 +226,13 @@ class SecretSanta():
         cols = [a for a in range(len(self.people))]
         matches = []
 
+        #O(p)
+        #get random person from graph, and match them with another person
         while len(rows) != 0:
             v = random.choice(rows)
             r = self.graph.getRow(v)
-            v2 = r.index(1)
-            while v2 not in cols:
+            v2 = r.index(1) #gets the first potential match
+            while v2 not in cols: #if person is already taken, remove them from graph and find another person
                 self.graph.remove_edge(v, v2)
                 v2 = r.index(1)
             self.graph.remove_edge(v, v2)
@@ -246,11 +256,11 @@ class SecretSanta():
         server = smtplib.SMTP(smtpServer, port)
         context = ssl.create_default_context()
         try:
-            server.ehlo() # Can be omitted
+            server.ehlo()
             server.starttls(context=context) # Secure the connection
-            server.ehlo() # Can be omitted
+            server.ehlo()
             server.login(sender_email, password)
-            for i in self.matched:
+            for i in self.matched: #O(p)
                 giftGiver= i[0]
                 giftReciever = i[1]
                 reciever_email = giftGiver.email
@@ -258,24 +268,17 @@ class SecretSanta():
                 message['Subject'] = "Secret Santa"
                 message['From'] = sender_email
                 message["To"] = reciever_email
-                # body = f"Hello {giftGiver.name}, \nYou have matched with {giftReciever.name} and this is how they answered the following questions: \n"
-                # q = 0
-                # for k in giftReciever.answers:
-                #     body = body + self.allQuestions[q] + ': '  + k + "\n"
-                #     q += 1
                 html = f"""\
 <html>
   <body>
     <p> Hello {giftGiver.name}, \nYou have matched with {giftReciever.name} and this is how they answered the following questions: <br>"""
                 q = 0
-                for k in giftReciever.answers:
+                for k in giftReciever.answers: #O(q)
                     html = html + '<b>' + self.allQuestions[q] + '</b>' + ': ' + k + '<br>' + '\n'
                     q += 1
                 html += """</p>
   </body>
 </html>"""
-                print(html)
-                #message.attach(MIMEText(body, "plain"))
                 message.attach(MIMEText(html, "html"))
                 with open(attachment, "rb") as a:
                     part = MIMEBase("application", "octet-stream")
@@ -297,3 +300,5 @@ class SecretSanta():
 Can use a pseudo random function of the sorted list of degree of matches, then with the function allow an input of randomenss, 1 being max randomness and decimal points till 0 means least randomness
 This function will map either people who match very well close together in a set space or randomly either far apart or close together
 """
+
+
